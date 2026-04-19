@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  STAFF
+}
+
+enum ServiceCategory {
+  BATH
+  GROOMING
+  CARE
+}
+
+enum PetType {
+  DOG
+  CAT
+  ALL
+}
+
+enum PetGender {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum PetSize {
+  SMALL
+  MEDIUM
+  LARGE
+  UNKNOWN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_SERVICE
+  COMPLETED
+  CANCELLED
+}
+
+enum CouponType {
+  CASH
+  DISCOUNT
+}
+
+enum CouponStatus {
+  UNUSED
+  USED
+  EXPIRED
+}
+
+enum FollowUpStatus {
+  PENDING
+  DONE
+  SKIPPED
+}
+
+model User {
+  id                 String         @id @default(cuid())
+  name               String
+  email              String         @unique
+  passwordHash       String
+  role               UserRole       @default(STAFF)
+  isActive           Boolean        @default(true)
+  appointments       Appointment[]  @relation("AppointmentStaff")
+  visitRecords       VisitRecord[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model StoreProfile {
+  id                 String         @id @default(cuid())
+  name               String
+  phone              String?
+  address            String?
+  businessHours      String?
+  description        String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model ServiceItem {
+  id                 String         @id @default(cuid())
+  name               String
+  category           ServiceCategory
+  durationMinutes    Int
+  price              Decimal        @db.Decimal(10, 2)
+  petTypeScope       PetType        @default(ALL)
+  description        String?
+  isActive           Boolean        @default(true)
+  appointments       Appointment[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([name])
+  @@index([isActive])
+}
+
+model Customer {
+  id                 String         @id @default(cuid())
+  name               String
+  phone              String         @unique
+  wechat             String?
+  note               String?
+  pets               Pet[]
+  appointments       Appointment[]
+  coupons            Coupon[]
+  followUpTasks      FollowUpTask[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([name])
+}
+
+model Pet {
+  id                 String         @id @default(cuid())
+  customerId         String
+  customer           Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  name               String
+  type               PetType
+  breed              String?
+  gender             PetGender      @default(UNKNOWN)
+  birthday           DateTime?
+  ageText            String?
+  size               PetSize        @default(UNKNOWN)
+  coatCondition      String?
+  healthNote         String?
+  temperamentNote    String?
+  appointments       Appointment[]
+  followUpTasks      FollowUpTask[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([customerId])
+  @@index([name])
+}
+
+model Appointment {
+  id                 String             @id @default(cuid())
+  appointmentNo      String             @unique
+  customerId         String
+  customer           Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  petId              String
+  pet                Pet                @relation(fields: [petId], references: [id], onDelete: Restrict)
+  serviceItemId      String
+  serviceItem        ServiceItem        @relation(fields: [serviceItemId], references: [id], onDelete: Restrict)
+  staffId            String?
+  staff              User?              @relation("AppointmentStaff", fields: [staffId], references: [id], onDelete: SetNull)
+  scheduledDate      DateTime
+  startTime          DateTime
+  endTime            DateTime?
+  status             AppointmentStatus  @default(PENDING)
+  remark             String?
+  cancelReason       String?
+  visitRecord        VisitRecord?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([customerId])
+  @@index([petId])
+  @@index([serviceItemId])
+  @@index([staffId])
+  @@index([scheduledDate])
+  @@index([status])
+  @@index([scheduledDate, status])
+}
+
+model VisitRecord {
+  id                 String         @id @default(cuid())
+  appointmentId      String         @unique
+  appointment        Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  actualServiceName  String
+  actualAmount       Decimal?       @db.Decimal(10, 2)
+  staffId            String?
+  staff              User?          @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  checkInAt          DateTime?
+  completedAt        DateTime?
+  serviceNote        String?
+  petConditionNote   String?
+  nextSuggestedVisitAt DateTime?
+  followUpTasks      FollowUpTask[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([staffId])
+  @@index([completedAt])
+}
+
+model Coupon {
+  id                 String         @id @default(cuid())
+  customerId         String
+  customer           Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  title              String
+  type               CouponType
+  value              Decimal        @db.Decimal(10, 2)
+  minSpend           Decimal?       @db.Decimal(10, 2)
+  status             CouponStatus   @default(UNUSED)
+  validFrom          DateTime?
+  validUntil         DateTime?
+  note               String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@index([validUntil])
+}
+
+model FollowUpTask {
+  id                 String          @id @default(cuid())
+  customerId         String
+  customer           Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  petId              String?
+  pet                Pet?            @relation(fields: [petId], references: [id], onDelete: SetNull)
+  sourceVisitRecordId String?
+  sourceVisitRecord  VisitRecord?    @relation(fields: [sourceVisitRecordId], references: [id], onDelete: SetNull)
+  dueDate            DateTime
+  status             FollowUpStatus  @default(PENDING)
+  note               String?
+  completedAt        DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([customerId])
+  @@index([petId])
+  @@index([sourceVisitRecordId])
+  @@index([status])
+  @@index([dueDate])
+}
