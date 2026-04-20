@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { toggleServiceStatusAction } from "@/app/(dashboard)/services/actions";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat("zh-CN", {

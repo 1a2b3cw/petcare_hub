@@ -50,6 +50,12 @@
 - `09-first-real-crud-services.md`
   讲为什么第一个真实业务模块先选服务项目管理，以及这一轮 CRUD 是怎么从 mock 数据切到真实数据库的
 
+- `10-customer-and-pet-module.md`
+  讲第二条业务主线“客户 + 宠物”是怎么做的，为什么要把宠物做成客户的子资源，以及 Server Action 和表单组件是怎么复用的
+
+- `11-dev-performance-and-cache.md`
+  讲为什么接了远程数据库以后页面会变慢，以及这一轮是怎么通过 `revalidate` 和 `revalidatePath` 做第一轮优化的
+
 ## 后续写作规则
 
 从现在开始，只要我帮你做了新的开发动作，原则上都会补一篇或更新一篇这里的文档。文档会尽量保持下面的结构：
