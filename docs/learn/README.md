@@ -44,6 +44,9 @@
 - `07-first-real-database-setup.md`
   讲第一次把 PostgreSQL 真正跑起来时，该如何在本地 PostgreSQL 和 Neon 之间选择并完成接入
 
+- `08-version-strategy.md`
+  讲为什么要固定依赖版本、Node 版本，以及这套项目当前采用的版本策略是什么
+
 ## 后续写作规则
 
 从现在开始，只要我帮你做了新的开发动作，原则上都会补一篇或更新一篇这里的文档。文档会尽量保持下面的结构：
