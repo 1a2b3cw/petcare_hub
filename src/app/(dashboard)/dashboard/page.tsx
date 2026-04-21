@@ -1,13 +1,73 @@
+import { endOfDay, startOfDay } from "date-fns";
+
 import { PageHeader } from "@/components/common/page-header";
+import { prisma } from "@/lib/prisma";
 
-const stats = [
-  { label: "今日预约", value: "12" },
-  { label: "待确认", value: "4" },
-  { label: "今日完成", value: "6" },
-  { label: "待回访", value: "9" },
-];
+export const revalidate = 30;
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const today = new Date();
+  const dayStart = startOfDay(today);
+  const dayEnd = endOfDay(today);
+
+  const [todayAppointments, pendingAppointments, todayCompleted, pendingFollowUps, recentFollowUps] = await Promise.all([
+    prisma.appointment.count({
+      where: {
+        scheduledDate: {
+          gte: dayStart,
+          lte: dayEnd,
+        },
+      },
+    }),
+    prisma.appointment.count({
+      where: {
+        status: "PENDING",
+      },
+    }),
+    prisma.appointment.count({
+      where: {
+        status: "COMPLETED",
+        updatedAt: {
+          gte: dayStart,
+          lte: dayEnd,
+        },
+      },
+    }),
+    prisma.followUpTask.count({
+      where: {
+        status: "PENDING",
+      },
+    }),
+    prisma.followUpTask.findMany({
+      where: {
+        status: "PENDING",
+      },
+      orderBy: {
+        dueDate: "asc",
+      },
+      take: 3,
+      include: {
+        customer: {
+          select: {
+            name: true,
+          },
+        },
+        pet: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const stats = [
+    { label: "今日预约", value: String(todayAppointments) },
+    { label: "待确认", value: String(pendingAppointments) },
+    { label: "今日完成", value: String(todayCompleted) },
+    { label: "待回访", value: String(pendingFollowUps) },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -26,12 +86,23 @@ export default function DashboardPage() {
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <h2 className="text-lg font-semibold">当前开发顺序</h2>
-          <ol className="mt-4 space-y-3 text-sm text-slate-600">
-            <li>1. 先完成 Prisma 迁移和种子数据</li>
-            <li>2. 再打通服务项目、客户/宠物档案</li>
-            <li>3. 最后补预约流转和履约记录</li>
-          </ol>
+          <h2 className="text-lg font-semibold">待处理回访</h2>
+          {recentFollowUps.length === 0 ? (
+            <p className="mt-4 text-sm text-slate-500">当前没有待回访任务，说明最近的履约记录都还没挂出回访提醒。</p>
+          ) : (
+            <div className="mt-4 space-y-3 text-sm text-slate-600">
+              {recentFollowUps.map((task) => (
+                <div key={task.id} className="rounded-xl bg-slate-50 p-3">
+                  <p className="font-medium text-slate-900">
+                    {task.customer.name}
+                    {task.pet?.name ? ` / ${task.pet.name}` : ""}
+                  </p>
+                  <p className="mt-1">计划回访：{new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit" }).format(task.dueDate)}</p>
+                  <p className="mt-1 text-xs text-slate-500">{task.note || "暂无备注"}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5">

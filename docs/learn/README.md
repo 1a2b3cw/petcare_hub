@@ -56,6 +56,15 @@
 - `11-dev-performance-and-cache.md`
   讲为什么接了远程数据库以后页面会变慢，以及这一轮是怎么通过 `revalidate` 和 `revalidatePath` 做第一轮优化的
 
+- `12-appointments-flow.md`
+  讲预约模块是怎么从 mock 列表升级成真实数据库页面的，以及最小可用的状态流转为什么这样设计
+
+- `13-appointment-detail-and-visit-record.md`
+  讲预约详情页和履约记录是怎么接起来的，以及为什么要在状态流转时自动补齐到店和完成时间
+
+- `14-repurchase-operations.md`
+  讲复购运营页是怎么接到履约记录后面的，以及为什么要把回访提醒和沉睡客户放在同一个页面里
+
 ## 后续写作规则
 
 从现在开始，只要我帮你做了新的开发动作，原则上都会补一篇或更新一篇这里的文档。文档会尽量保持下面的结构：

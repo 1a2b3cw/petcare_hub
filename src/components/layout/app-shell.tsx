@@ -11,6 +11,7 @@ const sidebarItems: AppSidebarItem[] = [
   { href: "/services", label: "服务项目", description: "维护服务时长与价格" },
   { href: "/customers", label: "客户宠物", description: "查看客户与宠物档案" },
   { href: "/appointments", label: "预约管理", description: "处理预约创建与状态流转" },
+  { href: "/operations", label: "复购运营", description: "查看回访提醒与沉睡客户" },
 ];
 
 type AppShellProps = {
@@ -41,12 +42,12 @@ export function AppShell({ children }: AppShellProps) {
                   className={cn(
                     "block rounded-xl border px-4 py-3 transition-colors",
                     active
-                      ? "border-slate-900 bg-slate-900 text-white"
+                      ? "border-slate-900 bg-slate-900 text-white shadow-sm hover:text-white focus-visible:text-white active:text-white"
                       : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100",
                   )}
                 >
-                  <p className="text-sm font-medium">{item.label}</p>
-                  <p className={cn("mt-1 text-xs", active ? "text-slate-300" : "text-slate-500")}>{item.description}</p>
+                  <p className={cn("text-sm font-medium", active ? "text-white" : undefined)}>{item.label}</p>
+                  <p className={cn("mt-1 text-xs", active ? "text-white/90" : "text-slate-500")}>{item.description}</p>
                 </Link>
               );
             })}
