@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { parse } from "date-fns";
 
 import { prisma } from "@/lib/prisma";
@@ -110,6 +111,7 @@ export async function createCouponAction(formData: FormData) {
   });
 
   await revalidateOperationPaths(customer.id);
+  redirect("/operations?success=sent");
 }
 
 export async function markCouponUsedAction(couponId: string) {

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { updateCustomerAction } from "@/app/(dashboard)/customers/actions";
 import { PageHeader } from "@/components/common/page-header";
 import { CustomerForm } from "@/components/customers/customer-form";
+import { Card, CardContent } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -29,18 +30,22 @@ export default async function EditCustomerPage({ params }: EditCustomerPageProps
         description="修改客户基础资料。手机号如果调整，注意要和系统里已有数据保持唯一。"
       />
 
-      <CustomerForm
-        action={updateCustomerAction.bind(null, customer.id)}
-        submitText="保存修改"
-        pendingText="保存中..."
-        cancelHref={`/customers/${customer.id}`}
-        defaultValues={{
-          name: customer.name,
-          phone: customer.phone,
-          wechat: customer.wechat ?? "",
-          note: customer.note ?? "",
-        }}
-      />
+      <Card className="max-w-2xl border shadow-sm">
+        <CardContent className="pt-6">
+          <CustomerForm
+            action={updateCustomerAction.bind(null, customer.id)}
+            submitText="保存修改"
+            pendingText="保存中..."
+            cancelHref={`/customers/${customer.id}`}
+            defaultValues={{
+              name: customer.name,
+              phone: customer.phone,
+              wechat: customer.wechat ?? "",
+              note: customer.note ?? "",
+            }}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

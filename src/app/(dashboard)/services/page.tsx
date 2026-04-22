@@ -3,6 +3,7 @@ import { Plus, Scissors } from "lucide-react";
 
 import { toggleServiceStatusAction } from "@/app/(dashboard)/services/actions";
 import { PageHeader } from "@/components/common/page-header";
+import { SearchParamToast } from "@/components/common/search-param-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,6 +31,7 @@ export default async function ServicesPage() {
 
   return (
     <div className="space-y-5">
+      <SearchParamToast />
       <PageHeader
         title="服务项目"
         actions={

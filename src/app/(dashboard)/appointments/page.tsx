@@ -5,6 +5,7 @@ import type { AppointmentStatus } from "@prisma/client";
 
 import { advanceAppointmentStatusAction, cancelAppointmentAction } from "@/app/(dashboard)/appointments/actions";
 import { PageHeader } from "@/components/common/page-header";
+import { SearchParamToast } from "@/components/common/search-param-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,6 +87,7 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
 
   return (
     <div className="space-y-5">
+      <SearchParamToast />
       <PageHeader
         title="预约管理"
         actions={

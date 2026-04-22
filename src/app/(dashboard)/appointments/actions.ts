@@ -173,7 +173,7 @@ export async function createAppointmentAction(formData: FormData) {
   });
 
   revalidateAppointmentPaths(customer.id);
-  redirect("/appointments");
+  redirect("/appointments?success=created");
 }
 
 export async function advanceAppointmentStatusAction(appointmentId: string) {
@@ -374,5 +374,5 @@ export async function saveVisitRecordAction(appointmentId: string, formData: For
 
   revalidateAppointmentPaths(appointment.customerId);
   revalidateAppointmentDetailPath(appointmentId);
-  redirect(`/appointments/${appointmentId}`);
+  redirect(`/appointments/${appointmentId}?success=saved`);
 }

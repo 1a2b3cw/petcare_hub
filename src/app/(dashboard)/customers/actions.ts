@@ -43,7 +43,7 @@ export async function createCustomerAction(formData: FormData) {
   });
 
   revalidatePath("/customers");
-  redirect(`/customers/${customer.id}`);
+  redirect(`/customers/${customer.id}?success=created`);
 }
 
 export async function updateCustomerAction(customerId: string, formData: FormData) {
@@ -61,7 +61,7 @@ export async function updateCustomerAction(customerId: string, formData: FormDat
 
   revalidatePath("/customers");
   revalidatePath(`/customers/${customerId}`);
-  redirect(`/customers/${customerId}`);
+  redirect(`/customers/${customerId}?success=updated`);
 }
 
 export async function createPetAction(customerId: string, formData: FormData) {
@@ -84,7 +84,7 @@ export async function createPetAction(customerId: string, formData: FormData) {
 
   revalidatePath("/customers");
   revalidatePath(`/customers/${customerId}`);
-  redirect(`/customers/${customerId}`);
+  redirect(`/customers/${customerId}?success=created`);
 }
 
 export async function updatePetAction(customerId: string, petId: string, formData: FormData) {
@@ -107,5 +107,5 @@ export async function updatePetAction(customerId: string, petId: string, formDat
 
   revalidatePath("/customers");
   revalidatePath(`/customers/${customerId}`);
-  redirect(`/customers/${customerId}`);
+  redirect(`/customers/${customerId}?success=updated`);
 }

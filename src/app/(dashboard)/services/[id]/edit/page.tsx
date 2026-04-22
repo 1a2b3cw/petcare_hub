@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { updateServiceAction } from "@/app/(dashboard)/services/actions";
 import { PageHeader } from "@/components/common/page-header";
 import { ServiceForm } from "@/components/services/service-form";
+import { Card, CardContent } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -31,19 +32,23 @@ export default async function EditServicePage({ params }: EditServicePageProps) 
         description="服务项目不做复杂配置系统，先保证门店最常用的字段能清楚维护。"
       />
 
-      <ServiceForm
-        action={updateServiceAction.bind(null, service.id)}
-        submitText="保存修改"
-        pendingText="保存中..."
-        defaultValues={{
-          name: service.name,
-          category: service.category,
-          durationMinutes: service.durationMinutes,
-          price: Number(service.price),
-          petTypeScope: service.petTypeScope,
-          description: service.description ?? "",
-        }}
-      />
+      <Card className="max-w-2xl border shadow-sm">
+        <CardContent className="pt-6">
+          <ServiceForm
+            action={updateServiceAction.bind(null, service.id)}
+            submitText="保存修改"
+            pendingText="保存中..."
+            defaultValues={{
+              name: service.name,
+              category: service.category,
+              durationMinutes: service.durationMinutes,
+              price: Number(service.price),
+              petTypeScope: service.petTypeScope,
+              description: service.description ?? "",
+            }}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

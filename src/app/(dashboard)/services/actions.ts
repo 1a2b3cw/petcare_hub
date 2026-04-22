@@ -32,7 +32,7 @@ export async function createServiceAction(formData: FormData) {
   });
 
   revalidatePath("/services");
-  redirect("/services");
+  redirect("/services?success=created");
 }
 
 export async function updateServiceAction(serviceId: string, formData: FormData) {
@@ -51,7 +51,7 @@ export async function updateServiceAction(serviceId: string, formData: FormData)
   });
 
   revalidatePath("/services");
-  redirect("/services");
+  redirect("/services?success=updated");
 }
 
 export async function toggleServiceStatusAction(serviceId: string, nextStatus: boolean) {

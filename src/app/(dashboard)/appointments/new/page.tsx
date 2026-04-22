@@ -1,6 +1,7 @@
 import { createAppointmentAction } from "@/app/(dashboard)/appointments/actions";
 import { AppointmentForm } from "@/components/appointments/appointment-form";
 import { PageHeader } from "@/components/common/page-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -51,16 +52,20 @@ export default async function NewAppointmentPage() {
         description="把客户、宠物、服务和时间串起来，先完成一条可真正落库的预约主链路。"
       />
 
-      <AppointmentForm
-        action={createAppointmentAction}
-        customers={customers}
-        services={services.map((service) => ({
-          ...service,
-          price: Number(service.price),
-        }))}
-        staffOptions={staffOptions}
-        cancelHref="/appointments"
-      />
+      <Card className="max-w-3xl border shadow-sm">
+        <CardContent className="pt-6">
+          <AppointmentForm
+            action={createAppointmentAction}
+            customers={customers}
+            services={services.map((service) => ({
+              ...service,
+              price: Number(service.price),
+            }))}
+            staffOptions={staffOptions}
+            cancelHref="/appointments"
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

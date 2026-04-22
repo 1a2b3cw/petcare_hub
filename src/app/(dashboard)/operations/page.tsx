@@ -11,6 +11,7 @@ import {
   skipFollowUpTaskAction,
 } from "@/app/(dashboard)/operations/actions";
 import { PageHeader } from "@/components/common/page-header";
+import { SearchParamToast } from "@/components/common/search-param-toast";
 import { CouponForm } from "@/components/operations/coupon-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,7 @@ export default async function OperationsPage() {
 
   return (
     <div className="space-y-6">
+      <SearchParamToast />
       <PageHeader title="复购运营" />
 
       {/* 统计卡 */}
