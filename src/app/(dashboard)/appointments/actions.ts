@@ -2,13 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { addMinutes, endOfDay, format, parse, startOfDay } from "date-fns";
+import { addMinutes, format, parse, startOfDay } from "date-fns";
+
+import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { appointmentFormSchema, visitRecordFormSchema } from "@/lib/validations/appointment";
 
+function parseFormDataSafe<T>(schema: z.ZodType<T>, raw: unknown): T {
+  const result = schema.safeParse(raw);
+  if (!result.success) {
+    throw new Error(result.error.issues.map((e) => e.message).join("；"));
+  }
+  return result.data;
+}
+
 function parseAppointmentFormData(formData: FormData) {
-  return appointmentFormSchema.parse({
+  return parseFormDataSafe(appointmentFormSchema, {
     customerId: formData.get("customerId"),
     petId: formData.get("petId"),
     serviceItemId: formData.get("serviceItemId"),
@@ -20,7 +30,7 @@ function parseAppointmentFormData(formData: FormData) {
 }
 
 function parseVisitRecordFormData(formData: FormData) {
-  return visitRecordFormSchema.parse({
+  return parseFormDataSafe(visitRecordFormSchema, {
     actualServiceName: formData.get("actualServiceName"),
     actualAmount: formData.get("actualAmount"),
     staffId: formData.get("staffId"),
@@ -90,18 +100,16 @@ async function syncFollowUpTaskFromVisitRecord(input: {
   });
 }
 
-async function buildAppointmentNo(scheduledDate: Date) {
+function buildAppointmentNo(scheduledDate: Date): string {
   const prefix = `APT-${format(scheduledDate, "yyyyMMdd")}`;
-  const count = await prisma.appointment.count({
-    where: {
-      scheduledDate: {
-        gte: startOfDay(scheduledDate),
-        lte: endOfDay(scheduledDate),
-      },
-    },
-  });
-
-  return `${prefix}-${String(count + 1).padStart(3, "0")}`;
+  // 用随机字符串替代 count，彻底消除并发时的唯一约束冲突
+  // 字符表去掉 0/O/1/I 等易混淆字符，collision probability ≈ 1/(32^4) ≈ 0.003‱
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const suffix = Array.from(
+    { length: 4 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
+  return `${prefix}-${suffix}`;
 }
 
 export async function createAppointmentAction(formData: FormData) {
@@ -294,6 +302,7 @@ export async function cancelAppointmentAction(appointmentId: string) {
 
   revalidateAppointmentPaths(appointment.customerId);
   revalidateAppointmentDetailPath(appointment.id);
+  redirect(`/appointments/${appointment.id}?success=updated`);
 }
 
 export async function saveVisitRecordAction(appointmentId: string, formData: FormData) {

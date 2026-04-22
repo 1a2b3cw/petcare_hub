@@ -14,9 +14,12 @@ function formatDate(date: Date | null | undefined) {
   return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 }
 
+const CUSTOMERS_PAGE_LIMIT = 100;
+
 export default async function CustomersPage() {
   const customers = await prisma.customer.findMany({
     orderBy: { createdAt: "desc" },
+    take: CUSTOMERS_PAGE_LIMIT,
     include: {
       pets: { select: { id: true, name: true, type: true } },
       appointments: {

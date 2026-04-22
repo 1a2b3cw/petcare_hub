@@ -4,20 +4,40 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
+import { storeProfileSchema } from "@/lib/validations/store-profile";
 
 export async function saveStoreProfileAction(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
-  const address = String(formData.get("address") ?? "").trim();
-  const businessHours = String(formData.get("businessHours") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+  const result = storeProfileSchema.safeParse({
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+    businessHours: formData.get("businessHours"),
+    description: formData.get("description"),
+  });
 
-  if (!name) return;
+  if (!result.success) {
+    throw new Error(result.error.issues.map((e) => e.message).join("；"));
+  }
+
+  const { name, phone, address, businessHours, description } = result.data;
 
   await prisma.storeProfile.upsert({
     where: { id: "default-store" },
-    update: { name, phone: phone || null, address: address || null, businessHours: businessHours || null, description: description || null },
-    create: { id: "default-store", name, phone: phone || null, address: address || null, businessHours: businessHours || null, description: description || null },
+    update: {
+      name,
+      phone: phone ?? null,
+      address: address ?? null,
+      businessHours: businessHours ?? null,
+      description: description ?? null,
+    },
+    create: {
+      id: "default-store",
+      name,
+      phone: phone ?? null,
+      address: address ?? null,
+      businessHours: businessHours ?? null,
+      description: description ?? null,
+    },
   });
 
   revalidatePath("/settings");

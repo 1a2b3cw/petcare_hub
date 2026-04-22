@@ -49,7 +49,7 @@ export default async function DashboardPage() {
     pendingFollowUps,
     recentFollowUps,
     todayAppointmentList,
-    dormantCandidates,
+    dormantCustomersCount,
     activeCoupons,
   ] = await Promise.all([
     prisma.appointment.count({ where: { scheduledDate: { gte: dayStart, lte: dayEnd } } }),
@@ -76,23 +76,19 @@ export default async function DashboardPage() {
         staff: { select: { name: true } },
       },
     }),
-    prisma.customer.findMany({
-      include: {
-        appointments: {
-          where: { status: "COMPLETED" },
-          orderBy: { scheduledDate: "desc" },
-          take: 1,
-          select: { scheduledDate: true },
+    // 用数据库聚合直接算沉睡客户数，避免加载全量客户到内存
+    prisma.customer.count({
+      where: {
+        appointments: { some: { status: "COMPLETED" } },
+        NOT: {
+          appointments: {
+            some: { status: "COMPLETED", scheduledDate: { gte: dormantCutoff } },
+          },
         },
       },
     }),
     prisma.coupon.count({ where: { status: "UNUSED" } }),
   ]);
-
-  const dormantCustomersCount = dormantCandidates.filter((c) => {
-    const last = c.appointments[0]?.scheduledDate;
-    return last && last < dormantCutoff;
-  }).length;
 
   const stats = [
     { label: "今日预约", value: todayAppointments, icon: CalendarDays, color: "text-blue-600", bg: "bg-blue-50" },

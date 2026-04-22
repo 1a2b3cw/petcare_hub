@@ -75,6 +75,8 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
   const appointments = await prisma.appointment.findMany({
     where,
     orderBy: view === "calendar" || params.date ? [{ startTime: "asc" }] : [{ scheduledDate: "desc" }, { startTime: "asc" }],
+    // 列表视图无日期筛选时最多取最近 100 条，避免全表加载
+    take: view === "list" && !params.date ? 100 : undefined,
     include: {
       customer: { select: { id: true, name: true } },
       pet: { select: { name: true } },

@@ -53,7 +53,7 @@ const couponStatusConfig: Record<CouponStatus, { label: string; className: strin
 export default async function OperationsPage() {
   const dormantCutoff = subDays(new Date(), 30);
 
-  const [pendingTasks, pendingCount, doneCount, skippedCount, dormantCandidates, activeCoupons, customers, coupons] =
+  const [pendingTasks, pendingCount, doneCount, skippedCount, dormantRaw, activeCoupons, customers, coupons] =
     await Promise.all([
       prisma.followUpTask.findMany({
         where: { status: "PENDING" },
@@ -67,7 +67,16 @@ export default async function OperationsPage() {
       prisma.followUpTask.count({ where: { status: "PENDING" } }),
       prisma.followUpTask.count({ where: { status: "DONE" } }),
       prisma.followUpTask.count({ where: { status: "SKIPPED" } }),
+      // 数据库直接过滤沉睡客户，不再全量加载后 JS 筛选
       prisma.customer.findMany({
+        where: {
+          appointments: { some: { status: "COMPLETED" } },
+          NOT: {
+            appointments: {
+              some: { status: "COMPLETED", scheduledDate: { gte: dormantCutoff } },
+            },
+          },
+        },
         include: {
           pets: { orderBy: { createdAt: "asc" }, select: { id: true, name: true } },
           appointments: {
@@ -77,9 +86,16 @@ export default async function OperationsPage() {
             select: { id: true, scheduledDate: true, serviceItem: { select: { name: true } } },
           },
         },
+        orderBy: { createdAt: "asc" },
+        take: 30,
       }),
       prisma.coupon.count({ where: { status: "UNUSED" } }),
-      prisma.customer.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, phone: true } }),
+      // 发券下拉列表加 take 上限，避免客户量大时撑爆内存
+      prisma.customer.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        select: { id: true, name: true, phone: true },
+      }),
       prisma.coupon.findMany({
         orderBy: [{ createdAt: "desc" }],
         take: 12,
@@ -87,20 +103,14 @@ export default async function OperationsPage() {
       }),
     ]);
 
-  const dormantCustomers = dormantCandidates
-    .filter((c) => {
-      const last = c.appointments[0]?.scheduledDate;
-      return last && last < dormantCutoff;
-    })
-    .map((c) => ({
-      id: c.id,
-      name: c.name,
-      phone: c.phone,
-      petsLabel: c.pets.map((p) => p.name).join("、") || "暂无宠物",
-      lastCompletedAt: c.appointments[0]!.scheduledDate,
-      lastServiceName: c.appointments[0]!.serviceItem.name,
-    }))
-    .sort((a, b) => a.lastCompletedAt.getTime() - b.lastCompletedAt.getTime());
+  const dormantCustomers = dormantRaw.map((c) => ({
+    id: c.id,
+    name: c.name,
+    phone: c.phone,
+    petsLabel: c.pets.map((p) => p.name).join("、") || "暂无宠物",
+    lastCompletedAt: c.appointments[0]!.scheduledDate,
+    lastServiceName: c.appointments[0]!.serviceItem.name,
+  }));
 
   return (
     <div className="space-y-6">

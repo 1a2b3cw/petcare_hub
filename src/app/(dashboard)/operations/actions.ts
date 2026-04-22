@@ -18,7 +18,7 @@ async function revalidateOperationPaths(customerId?: string) {
 }
 
 function parseCouponFormData(formData: FormData) {
-  return couponFormSchema.parse({
+  const result = couponFormSchema.safeParse({
     customerId: formData.get("customerId"),
     title: formData.get("title"),
     type: formData.get("type"),
@@ -27,6 +27,10 @@ function parseCouponFormData(formData: FormData) {
     validUntil: formData.get("validUntil"),
     note: formData.get("note"),
   });
+  if (!result.success) {
+    throw new Error(result.error.issues.map((e) => e.message).join("；"));
+  }
+  return result.data;
 }
 
 export async function completeFollowUpTaskAction(taskId: string) {

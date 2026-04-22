@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { serviceFormSchema } from "@/lib/validations/service";
 
 function parseServiceFormData(formData: FormData) {
-  return serviceFormSchema.parse({
+  const result = serviceFormSchema.safeParse({
     name: formData.get("name"),
     category: formData.get("category"),
     durationMinutes: formData.get("durationMinutes"),
@@ -15,6 +15,10 @@ function parseServiceFormData(formData: FormData) {
     petTypeScope: formData.get("petTypeScope"),
     description: formData.get("description"),
   });
+  if (!result.success) {
+    throw new Error(result.error.issues.map((e) => e.message).join("；"));
+  }
+  return result.data;
 }
 
 export async function createServiceAction(formData: FormData) {
@@ -38,6 +42,15 @@ export async function createServiceAction(formData: FormData) {
 export async function updateServiceAction(serviceId: string, formData: FormData) {
   const values = parseServiceFormData(formData);
 
+  // 先查确认存在再更新，防止 P2025 静默失败
+  const existing = await prisma.serviceItem.findUnique({
+    where: { id: serviceId },
+    select: { id: true },
+  });
+  if (!existing) {
+    throw new Error("服务项目不存在，可能已被删除。");
+  }
+
   await prisma.serviceItem.update({
     where: { id: serviceId },
     data: {
@@ -55,11 +68,15 @@ export async function updateServiceAction(serviceId: string, formData: FormData)
 }
 
 export async function toggleServiceStatusAction(serviceId: string, nextStatus: boolean) {
+  const existing = await prisma.serviceItem.findUnique({
+    where: { id: serviceId },
+    select: { id: true },
+  });
+  if (!existing) return;
+
   await prisma.serviceItem.update({
     where: { id: serviceId },
-    data: {
-      isActive: nextStatus,
-    },
+    data: { isActive: nextStatus },
   });
 
   revalidatePath("/services");
