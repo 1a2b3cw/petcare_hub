@@ -85,16 +85,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <p className="text-sm text-muted-foreground">请输入账号密码登录门店后台</p>
           </div>
 
-          {/* 演示账号提示 */}
-          <div className="mb-6 rounded-xl border border-border bg-muted/50 px-4 py-3">
-            <p className="mb-1 text-xs font-medium text-muted-foreground">演示账号</p>
-            <div className="space-y-0.5 text-sm">
-              <p><span className="text-muted-foreground">店长：</span><span className="font-mono font-medium">owner@petcarehub.local</span></p>
-              <p><span className="text-muted-foreground">店员：</span><span className="font-mono font-medium">staff@petcarehub.local</span></p>
-              <p><span className="text-muted-foreground">密码：</span><span className="font-mono font-medium">petcare123</span></p>
-            </div>
-          </div>
-
           <LoginForm callbackUrl={callbackUrl} />
         </div>
       </div>
