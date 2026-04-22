@@ -16,5 +16,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // 保护所有非公开路由：排除 login、NextAuth API、_next 静态资源、favicon
-  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon\\.ico).*)"],
+  matcher: ["/((?!login|api/auth|api/health|_next/static|_next/image|favicon\\.ico).*)"],
 };
