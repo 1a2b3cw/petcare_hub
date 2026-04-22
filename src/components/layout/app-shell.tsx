@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { LogoutButton } from "@/components/auth/logout-button";
 import { cn } from "@/lib/utils";
 import type { AppSidebarItem } from "@/types/domain";
 
@@ -12,6 +13,7 @@ const sidebarItems: AppSidebarItem[] = [
   { href: "/customers", label: "客户宠物", description: "查看客户与宠物档案" },
   { href: "/appointments", label: "预约管理", description: "处理预约创建与状态流转" },
   { href: "/operations", label: "复购运营", description: "查看回访提醒与沉睡客户" },
+  { href: "/reports", label: "经营报表", description: "查看收入趋势与热门服务" },
 ];
 
 type AppShellProps = {
@@ -23,7 +25,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 md:grid-cols-[240px_1fr]">
+      <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)]">
         <aside className="border-r border-slate-200 bg-white p-6">
           <div className="mb-8 space-y-1">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">PetCare Hub</p>
@@ -52,9 +54,15 @@ export function AppShell({ children }: AppShellProps) {
               );
             })}
           </nav>
+
+          <div className="mt-8 border-t border-slate-200 pt-4">
+            <LogoutButton />
+          </div>
         </aside>
 
-        <main className="p-6 md:p-8">{children}</main>
+        <main className="min-w-0 p-6 pb-10 md:p-8 md:pb-12">
+          <div className="page-content">{children}</div>
+        </main>
       </div>
     </div>
   );

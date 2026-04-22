@@ -42,12 +42,14 @@ export default async function CustomersPage() {
       />
 
       {customers.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
-          <p>还没有客户档案。</p>
-          <p className="mt-1 text-sm">先新增一个客户，后面就能给他登记宠物并创建预约。</p>
+        <div className="empty-state rounded-2xl border border-dashed border-slate-300 bg-white text-slate-500">
+          <div>
+            <p>还没有客户档案。</p>
+            <p className="mt-1 text-sm">先新增一个客户，后面就能给他登记宠物并创建预约。</p>
+          </div>
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid items-stretch gap-4 lg:grid-cols-2">
           {customers.map((customer) => {
             const petsLabel = customer.pets.length
               ? customer.pets.map((pet) => pet.name).join("、")
@@ -58,7 +60,7 @@ export default async function CustomersPage() {
               <Link
                 key={customer.id}
                 href={`/customers/${customer.id}`}
-                className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-slate-400"
+                className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-slate-400"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -71,16 +73,16 @@ export default async function CustomersPage() {
                 </div>
 
                 <dl className="mt-4 space-y-2 text-sm">
-                  <div className="flex justify-between gap-4">
+                  <div className="info-row">
                     <dt className="text-slate-500">宠物</dt>
                     <dd className="text-slate-800">{petsLabel}</dd>
                   </div>
-                  <div className="flex justify-between gap-4">
+                  <div className="info-row">
                     <dt className="text-slate-500">最近完成服务</dt>
                     <dd className="text-slate-800">{formatDate(lastVisit)}</dd>
                   </div>
                   {customer.note ? (
-                    <div className="flex justify-between gap-4">
+                    <div className="info-row">
                       <dt className="text-slate-500">备注</dt>
                       <dd className="line-clamp-1 text-slate-800">{customer.note}</dd>
                     </div>

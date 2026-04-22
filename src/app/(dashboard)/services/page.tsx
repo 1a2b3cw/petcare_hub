@@ -60,7 +60,7 @@ export default async function ServicesPage() {
         }
       />
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="scroll-area overflow-x-auto rounded-2xl border border-slate-200 bg-white">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>

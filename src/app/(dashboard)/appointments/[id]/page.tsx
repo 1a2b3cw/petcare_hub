@@ -259,8 +259,8 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
               }}
             />
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-              先在预约列表里把状态推进到“服务中”，这里才会开放履约记录表单。
+            <div className="empty-state rounded-2xl border border-dashed border-slate-300 bg-white text-sm text-slate-500">
+              <div>先在预约列表里把状态推进到“服务中”，这里才会开放履约记录表单。</div>
             </div>
           )}
         </section>

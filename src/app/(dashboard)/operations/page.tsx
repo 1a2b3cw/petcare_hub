@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { differenceInCalendarDays, startOfDay, subDays } from "date-fns";
+import type { CouponStatus, CouponType } from "@prisma/client";
 
-import { completeFollowUpTaskAction, skipFollowUpTaskAction } from "@/app/(dashboard)/operations/actions";
+import {
+  completeFollowUpTaskAction,
+  createCouponAction,
+  markCouponExpiredAction,
+  markCouponUsedAction,
+  skipFollowUpTaskAction,
+} from "@/app/(dashboard)/operations/actions";
 import { PageHeader } from "@/components/common/page-header";
+import { CouponForm } from "@/components/operations/coupon-form";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { prisma } from "@/lib/prisma";
@@ -37,10 +45,34 @@ function followUpDueText(date: Date) {
   return "今天回访";
 }
 
+function formatMoney(value: number | null | undefined, type: CouponType = "CASH") {
+  if (value === null || value === undefined) {
+    return "未填写";
+  }
+
+  if (type === "DISCOUNT") {
+    return `${value} 折`;
+  }
+
+  return new Intl.NumberFormat("zh-CN", {
+    style: "currency",
+    currency: "CNY",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+const couponStatusMap = {
+  UNUSED: { label: "未使用", className: "bg-amber-50 text-amber-700" },
+  USED: { label: "已使用", className: "bg-emerald-50 text-emerald-700" },
+  EXPIRED: { label: "已过期", className: "bg-slate-100 text-slate-600" },
+} satisfies Record<CouponStatus, { label: string; className: string }>;
+
 export default async function OperationsPage() {
   const dormantCutoff = subDays(new Date(), 30);
 
-  const [pendingTasks, pendingCount, doneCount, skippedCount, dormantCandidates, activeCoupons] = await Promise.all([
+  const [pendingTasks, pendingCount, doneCount, skippedCount, dormantCandidates, activeCoupons, customers, coupons] =
+    await Promise.all([
     prisma.followUpTask.findMany({
       where: { status: "PENDING" },
       orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
@@ -99,6 +131,27 @@ export default async function OperationsPage() {
         status: "UNUSED",
       },
     }),
+    prisma.customer.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+      },
+    }),
+    prisma.coupon.findMany({
+      orderBy: [{ createdAt: "desc" }],
+      take: 12,
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+      },
+    }),
   ]);
 
   const dormantCustomers = dormantCandidates
@@ -145,12 +198,12 @@ export default async function OperationsPage() {
 
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="section-header">
             <h2 className="text-lg font-semibold text-slate-900">待回访任务</h2>
             <span className="text-sm text-slate-500">按到期时间升序展示</span>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <div className="scroll-area overflow-x-auto rounded-2xl border border-slate-200 bg-white">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
@@ -206,17 +259,17 @@ export default async function OperationsPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="section-header">
             <h2 className="text-lg font-semibold text-slate-900">沉睡客户筛选</h2>
             <span className="text-sm text-slate-500">超过 30 天未完成服务</span>
           </div>
 
           {dormantCustomers.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-              当前没有沉睡客户，说明最近复购情况还不错。
+            <div className="empty-state rounded-2xl border border-dashed border-slate-300 bg-white text-sm text-slate-500">
+              <div>当前没有沉睡客户，说明最近复购情况还不错。</div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="scroll-area max-h-[34rem] space-y-3 overflow-y-auto pr-1">
               {dormantCustomers.map((customer) => (
                 <div key={customer.id} className="rounded-2xl border border-slate-200 bg-white p-5">
                   <div className="flex items-start justify-between gap-4">
@@ -232,15 +285,15 @@ export default async function OperationsPage() {
                   </div>
 
                   <dl className="mt-4 space-y-2 text-sm text-slate-600">
-                    <div className="flex justify-between gap-4">
+                    <div className="info-row">
                       <dt>宠物</dt>
                       <dd>{customer.petsLabel}</dd>
                     </div>
-                    <div className="flex justify-between gap-4">
+                    <div className="info-row">
                       <dt>最近完成服务</dt>
                       <dd>{customer.lastServiceName}</dd>
                     </div>
-                    <div className="flex justify-between gap-4">
+                    <div className="info-row">
                       <dt>最近到店日期</dt>
                       <dd>{formatDate(customer.lastCompletedAt)}</dd>
                     </div>
@@ -255,6 +308,95 @@ export default async function OperationsPage() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="space-y-4">
+          <div className="section-header">
+            <h2 className="text-lg font-semibold text-slate-900">手动发券</h2>
+            <span className="text-sm text-slate-500">先做单张发券，足够支撑演示</span>
+          </div>
+
+          <CouponForm action={createCouponAction} customers={customers} />
+        </div>
+
+        <div className="space-y-4">
+          <div className="section-header">
+            <h2 className="text-lg font-semibold text-slate-900">最近优惠券</h2>
+            <span className="text-sm text-slate-500">展示最近 12 条</span>
+          </div>
+
+          <div className="scroll-area overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+            <table className="min-w-full divide-y divide-slate-200 text-sm">
+              <thead className="bg-slate-50 text-left text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">客户</th>
+                  <th className="px-4 py-3 font-medium">券信息</th>
+                  <th className="px-4 py-3 font-medium">有效期</th>
+                  <th className="px-4 py-3 font-medium">状态</th>
+                  <th className="px-4 py-3 font-medium">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {coupons.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
+                      还没有优惠券，先发一张回店券试试。
+                    </td>
+                  </tr>
+                ) : (
+                  coupons.map((coupon) => (
+                    <tr key={coupon.id}>
+                      <td className="px-4 py-4">
+                        <Link href={`/customers/${coupon.customer.id}`} className="font-medium text-slate-900 underline">
+                          {coupon.customer.name}
+                        </Link>
+                        <p className="mt-1 text-xs text-slate-500">{coupon.customer.phone}</p>
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        <p className="font-medium text-slate-900">{coupon.title}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {formatMoney(Number(coupon.value), coupon.type)}
+                          {coupon.minSpend ? ` / 满 ${Number(coupon.minSpend)} 可用` : ""}
+                        </p>
+                        {coupon.note ? <p className="mt-1 text-xs text-slate-500">{coupon.note}</p> : null}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        <p>起：{formatDate(coupon.validFrom)}</p>
+                        <p className="mt-1 text-xs text-slate-500">止：{formatDate(coupon.validUntil)}</p>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className={`rounded-full px-3 py-1 text-xs ${couponStatusMap[coupon.status].className}`}>
+                          {couponStatusMap[coupon.status].label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          {coupon.status === "UNUSED" ? (
+                            <>
+                              <form action={markCouponUsedAction.bind(null, coupon.id)}>
+                                <SubmitButton size="sm" pendingText="处理中...">
+                                  标记已用
+                                </SubmitButton>
+                              </form>
+                              <form action={markCouponExpiredAction.bind(null, coupon.id)}>
+                                <SubmitButton size="sm" variant="ghost" pendingText="处理中...">
+                                  标记过期
+                                </SubmitButton>
+                              </form>
+                            </>
+                          ) : (
+                            <span className="text-xs text-slate-400">无需操作</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </div>
