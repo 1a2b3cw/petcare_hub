@@ -150,60 +150,90 @@ export default async function OperationsPage() {
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-base">待回访任务</CardTitle>
           </CardHeader>
-          <div className="scroll-area overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40 hover:bg-muted/40">
-                  <TableHead>客户</TableHead>
-                  <TableHead>宠物</TableHead>
-                  <TableHead>回访日</TableHead>
-                  <TableHead>备注</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingTasks.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5}>
-                      <div className="flex min-h-32 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <MessageSquare className="h-7 w-7 opacity-25" />
-                        <p>暂无待回访任务</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  pendingTasks.map((task) => (
-                    <TableRow key={task.id}>
-                      <TableCell>
+          {pendingTasks.length === 0 ? (
+            <div className="flex min-h-32 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+              <MessageSquare className="h-7 w-7 opacity-25" />
+              <p>暂无待回访任务</p>
+            </div>
+          ) : (
+            <>
+              {/* 移动端卡片 */}
+              <div className="divide-y md:hidden">
+                {pendingTasks.map((task) => (
+                  <div key={task.id} className="px-4 py-3.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
                         <Link href={`/customers/${task.customer.id}`} className="font-medium text-foreground hover:text-primary">
                           {task.customer.name}
                         </Link>
-                        <p className="text-xs text-muted-foreground">{task.customer.phone}</p>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{task.pet?.name ?? "未指定"}</TableCell>
-                      <TableCell className="text-sm">
-                        <p>{formatDate(task.dueDate)}</p>
+                        {task.pet?.name && <span className="ml-1.5 text-xs text-muted-foreground">· {task.pet.name}</span>}
+                        <p className="mt-0.5 text-xs text-muted-foreground">{task.customer.phone}</p>
+                        {task.note && <p className="mt-0.5 text-xs text-muted-foreground">{task.note}</p>}
+                      </div>
+                      <div className="flex-none text-right">
+                        <p className="text-xs font-medium text-foreground">{formatDate(task.dueDate)}</p>
                         <p className={`text-xs ${differenceInCalendarDays(startOfDay(task.dueDate), startOfDay(new Date())) < 0 ? "text-rose-500" : "text-muted-foreground"}`}>
                           {followUpDueText(task.dueDate)}
                         </p>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{task.note || "—"}</TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1.5">
-                          <form action={completeFollowUpTaskAction.bind(null, task.id)}>
-                            <SubmitButton size="sm" className="h-7 px-2.5 text-xs" pendingText="...">完成</SubmitButton>
-                          </form>
-                          <form action={skipFollowUpTaskAction.bind(null, task.id)}>
-                            <SubmitButton size="sm" variant="ghost" className="h-7 px-2.5 text-xs" pendingText="...">跳过</SubmitButton>
-                          </form>
-                        </div>
-                      </TableCell>
+                      </div>
+                    </div>
+                    <div className="mt-2.5 flex gap-1.5">
+                      <form action={completeFollowUpTaskAction.bind(null, task.id)}>
+                        <SubmitButton size="sm" className="h-7 px-2.5 text-xs" pendingText="...">完成</SubmitButton>
+                      </form>
+                      <form action={skipFollowUpTaskAction.bind(null, task.id)}>
+                        <SubmitButton size="sm" variant="ghost" className="h-7 px-2.5 text-xs" pendingText="...">跳过</SubmitButton>
+                      </form>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* 桌面端表格 */}
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableHead>客户</TableHead>
+                      <TableHead>宠物</TableHead>
+                      <TableHead>回访日</TableHead>
+                      <TableHead>备注</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingTasks.map((task) => (
+                      <TableRow key={task.id}>
+                        <TableCell>
+                          <Link href={`/customers/${task.customer.id}`} className="font-medium text-foreground hover:text-primary">
+                            {task.customer.name}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">{task.customer.phone}</p>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{task.pet?.name ?? "未指定"}</TableCell>
+                        <TableCell className="text-sm">
+                          <p>{formatDate(task.dueDate)}</p>
+                          <p className={`text-xs ${differenceInCalendarDays(startOfDay(task.dueDate), startOfDay(new Date())) < 0 ? "text-rose-500" : "text-muted-foreground"}`}>
+                            {followUpDueText(task.dueDate)}
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{task.note || "—"}</TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-1.5">
+                            <form action={completeFollowUpTaskAction.bind(null, task.id)}>
+                              <SubmitButton size="sm" className="h-7 px-2.5 text-xs" pendingText="...">完成</SubmitButton>
+                            </form>
+                            <form action={skipFollowUpTaskAction.bind(null, task.id)}>
+                              <SubmitButton size="sm" variant="ghost" className="h-7 px-2.5 text-xs" pendingText="...">跳过</SubmitButton>
+                            </form>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </Card>
 
         <Card className="border shadow-sm">
@@ -258,70 +288,102 @@ export default async function OperationsPage() {
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-base">最近优惠券</CardTitle>
           </CardHeader>
-          <div className="scroll-area overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40 hover:bg-muted/40">
-                  <TableHead>客户</TableHead>
-                  <TableHead>券信息</TableHead>
-                  <TableHead>有效期</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {coupons.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
-                      还没有优惠券，先发一张试试。
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  coupons.map((coupon) => (
-                    <TableRow key={coupon.id}>
-                      <TableCell>
+          {coupons.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">还没有优惠券，先发一张试试。</div>
+          ) : (
+            <>
+              {/* 移动端卡片 */}
+              <div className="divide-y md:hidden">
+                {coupons.map((coupon) => (
+                  <div key={coupon.id} className="px-4 py-3.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
                         <Link href={`/customers/${coupon.customer.id}`} className="font-medium text-foreground hover:text-primary">
                           {coupon.customer.name}
                         </Link>
-                      </TableCell>
-                      <TableCell>
-                        <p className="text-sm font-medium">{coupon.title}</p>
+                        <p className="mt-0.5 text-sm text-muted-foreground">{coupon.title}</p>
                         <p className="text-xs text-muted-foreground">
                           {formatMoney(Number(coupon.value), coupon.type)}
                           {coupon.minSpend ? ` · 满 ${Number(coupon.minSpend)} 可用` : ""}
+                          {coupon.validUntil ? ` · 至 ${formatDate(coupon.validUntil)}` : ""}
                         </p>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        <p>{formatDate(coupon.validFrom)}</p>
-                        <p>至 {formatDate(coupon.validUntil)}</p>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${couponStatusConfig[coupon.status].className}`}>
-                          {couponStatusConfig[coupon.status].label}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1.5">
-                          {coupon.status === "UNUSED" ? (
-                            <>
-                              <form action={markCouponUsedAction.bind(null, coupon.id)}>
-                                <SubmitButton size="sm" className="h-7 px-2.5 text-xs" pendingText="...">已用</SubmitButton>
-                              </form>
-                              <form action={markCouponExpiredAction.bind(null, coupon.id)}>
-                                <SubmitButton size="sm" variant="ghost" className="h-7 px-2.5 text-xs" pendingText="...">过期</SubmitButton>
-                              </form>
-                            </>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </div>
-                      </TableCell>
+                      </div>
+                      <span className={`flex-none rounded-full border px-2 py-0.5 text-xs font-medium ${couponStatusConfig[coupon.status].className}`}>
+                        {couponStatusConfig[coupon.status].label}
+                      </span>
+                    </div>
+                    {coupon.status === "UNUSED" && (
+                      <div className="mt-2.5 flex gap-1.5">
+                        <form action={markCouponUsedAction.bind(null, coupon.id)}>
+                          <SubmitButton size="sm" className="h-7 px-2.5 text-xs" pendingText="...">已用</SubmitButton>
+                        </form>
+                        <form action={markCouponExpiredAction.bind(null, coupon.id)}>
+                          <SubmitButton size="sm" variant="ghost" className="h-7 px-2.5 text-xs" pendingText="...">过期</SubmitButton>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {/* 桌面端表格 */}
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableHead>客户</TableHead>
+                      <TableHead>券信息</TableHead>
+                      <TableHead>有效期</TableHead>
+                      <TableHead>状态</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {coupons.map((coupon) => (
+                      <TableRow key={coupon.id}>
+                        <TableCell>
+                          <Link href={`/customers/${coupon.customer.id}`} className="font-medium text-foreground hover:text-primary">
+                            {coupon.customer.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm font-medium">{coupon.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatMoney(Number(coupon.value), coupon.type)}
+                            {coupon.minSpend ? ` · 满 ${Number(coupon.minSpend)} 可用` : ""}
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          <p>{formatDate(coupon.validFrom)}</p>
+                          <p>至 {formatDate(coupon.validUntil)}</p>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${couponStatusConfig[coupon.status].className}`}>
+                            {couponStatusConfig[coupon.status].label}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-1.5">
+                            {coupon.status === "UNUSED" ? (
+                              <>
+                                <form action={markCouponUsedAction.bind(null, coupon.id)}>
+                                  <SubmitButton size="sm" className="h-7 px-2.5 text-xs" pendingText="...">已用</SubmitButton>
+                                </form>
+                                <form action={markCouponExpiredAction.bind(null, coupon.id)}>
+                                  <SubmitButton size="sm" variant="ghost" className="h-7 px-2.5 text-xs" pendingText="...">过期</SubmitButton>
+                                </form>
+                              </>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </Card>
       </div>
     </div>

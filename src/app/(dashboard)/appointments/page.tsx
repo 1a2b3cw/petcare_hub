@@ -133,7 +133,7 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
           </div>
           {view === "list" && (
             <Suspense fallback={null}>
-              <SearchInput placeholder="搜索预约号、客户、宠物…" className="w-56" />
+              <SearchInput placeholder="搜索预约号、客户、宠物…" className="w-full sm:w-56" />
             </Suspense>
           )}
         </div>
@@ -258,90 +258,125 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
       ) : (
         /* 列表视图 */
         <Card className="border shadow-sm">
-          <div className="scroll-area overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="w-32">预约编号</TableHead>
-                  <TableHead>客户 / 宠物</TableHead>
-                  <TableHead>服务项目</TableHead>
-                  <TableHead>预约时间</TableHead>
-                  <TableHead>员工</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {appointments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7}>
-                      <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-                        <CalendarDays className="h-8 w-8 opacity-30" />
-                        {q ? (
-                          <p>没有找到匹配「{q}」的预约</p>
-                        ) : (
-                          <p>当前筛选条件下没有预约</p>
-                        )}
-                        <Button asChild size="sm" variant="outline">
-                          <Link href="/appointments/new">新建预约</Link>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  appointments.map((a) => {
-                    const nextText = nextActionText(a.status);
-                    const canCancel = a.status !== "COMPLETED" && a.status !== "CANCELLED";
-                    return (
-                      <TableRow key={a.id}>
-                        <TableCell>
+          {appointments.length === 0 ? (
+            <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+              <CalendarDays className="h-8 w-8 opacity-30" />
+              {q ? <p>没有找到匹配「{q}」的预约</p> : <p>当前筛选条件下没有预约</p>}
+              <Button asChild size="sm" variant="outline">
+                <Link href="/appointments/new">新建预约</Link>
+              </Button>
+            </div>
+          ) : (
+            <>
+              {/* 移动端卡片列表 */}
+              <div className="divide-y md:hidden">
+                {appointments.map((a) => {
+                  const nextText = nextActionText(a.status);
+                  const canCancel = a.status !== "COMPLETED" && a.status !== "CANCELLED";
+                  return (
+                    <div key={a.id} className="px-4 py-3.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
                           <Link href={`/appointments/${a.id}`} className="font-mono text-xs font-medium text-primary hover:underline">
                             {a.appointmentNo}
                           </Link>
-                        </TableCell>
-                        <TableCell>
-                          <Link href={`/customers/${a.customer.id}`} className="font-medium text-foreground hover:text-primary">
-                            {a.customer.name}
-                          </Link>
-                          <p className="text-xs text-muted-foreground">{a.pet.name}</p>
-                        </TableCell>
-                        <TableCell className="text-sm">{a.serviceItem.name}</TableCell>
-                        <TableCell className="text-sm">
-                          {formatDateTime(a.startTime)}
-                          {a.endTime && <p className="text-xs text-muted-foreground">至 {formatTime(a.endTime)}</p>}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{a.staff?.name ?? "未分配"}</TableCell>
-                        <TableCell>
-                          <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusConfig[a.status].className}`}>
-                            {statusConfig[a.status].label}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-1.5">
-                            <Button asChild size="sm" variant="outline" className="h-7 px-2.5 text-xs">
-                              <Link href={`/appointments/${a.id}`}>详情</Link>
-                            </Button>
-                            {nextText && (
-                              <form action={advanceAppointmentStatusAction.bind(null, a.id)}>
-                                <SubmitButton size="sm" className="h-7 px-2.5 text-xs" pendingText="...">
-                                  {nextText}
-                                </SubmitButton>
-                              </form>
-                            )}
-                            {canCancel && (
-                              <form action={cancelAppointmentAction.bind(null, a.id)}>
-                                <SubmitButton size="sm" variant="ghost" className="h-7 px-2.5 text-xs" pendingText="...">取消</SubmitButton>
-                              </form>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                          <p className="mt-0.5 text-sm font-medium text-foreground">
+                            <Link href={`/customers/${a.customer.id}`} className="hover:text-primary">{a.customer.name}</Link>
+                            <span className="text-muted-foreground"> · {a.pet.name}</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">{a.serviceItem.name} · {formatDateTime(a.startTime)}</p>
+                        </div>
+                        <span className={`flex-none rounded-full border px-2 py-0.5 text-xs font-medium ${statusConfig[a.status].className}`}>
+                          {statusConfig[a.status].label}
+                        </span>
+                      </div>
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        <Button asChild size="sm" variant="outline" className="h-7 px-2.5 text-xs">
+                          <Link href={`/appointments/${a.id}`}>详情</Link>
+                        </Button>
+                        {nextText && (
+                          <form action={advanceAppointmentStatusAction.bind(null, a.id)}>
+                            <SubmitButton size="sm" className="h-7 px-2.5 text-xs" pendingText="...">{nextText}</SubmitButton>
+                          </form>
+                        )}
+                        {canCancel && (
+                          <form action={cancelAppointmentAction.bind(null, a.id)}>
+                            <SubmitButton size="sm" variant="ghost" className="h-7 px-2.5 text-xs" pendingText="...">取消</SubmitButton>
+                          </form>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 桌面端表格 */}
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableHead className="w-32">预约编号</TableHead>
+                      <TableHead>客户 / 宠物</TableHead>
+                      <TableHead>服务项目</TableHead>
+                      <TableHead>预约时间</TableHead>
+                      <TableHead>员工</TableHead>
+                      <TableHead>状态</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {appointments.map((a) => {
+                      const nextText = nextActionText(a.status);
+                      const canCancel = a.status !== "COMPLETED" && a.status !== "CANCELLED";
+                      return (
+                        <TableRow key={a.id}>
+                          <TableCell>
+                            <Link href={`/appointments/${a.id}`} className="font-mono text-xs font-medium text-primary hover:underline">
+                              {a.appointmentNo}
+                            </Link>
+                          </TableCell>
+                          <TableCell>
+                            <Link href={`/customers/${a.customer.id}`} className="font-medium text-foreground hover:text-primary">
+                              {a.customer.name}
+                            </Link>
+                            <p className="text-xs text-muted-foreground">{a.pet.name}</p>
+                          </TableCell>
+                          <TableCell className="text-sm">{a.serviceItem.name}</TableCell>
+                          <TableCell className="text-sm">
+                            {formatDateTime(a.startTime)}
+                            {a.endTime && <p className="text-xs text-muted-foreground">至 {formatTime(a.endTime)}</p>}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{a.staff?.name ?? "未分配"}</TableCell>
+                          <TableCell>
+                            <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusConfig[a.status].className}`}>
+                              {statusConfig[a.status].label}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-end gap-1.5">
+                              <Button asChild size="sm" variant="outline" className="h-7 px-2.5 text-xs">
+                                <Link href={`/appointments/${a.id}`}>详情</Link>
+                              </Button>
+                              {nextText && (
+                                <form action={advanceAppointmentStatusAction.bind(null, a.id)}>
+                                  <SubmitButton size="sm" className="h-7 px-2.5 text-xs" pendingText="...">{nextText}</SubmitButton>
+                                </form>
+                              )}
+                              {canCancel && (
+                                <form action={cancelAppointmentAction.bind(null, a.id)}>
+                                  <SubmitButton size="sm" variant="ghost" className="h-7 px-2.5 text-xs" pendingText="...">取消</SubmitButton>
+                                </form>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </Card>
       )}
     </div>
