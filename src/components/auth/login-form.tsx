@@ -47,12 +47,12 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
     >
       <label className="block space-y-2 text-sm text-slate-700">
         <span className="font-medium">邮箱</span>
-        <Input name="email" type="email" defaultValue="owner@petcarehub.local" required />
+        <Input name="email" type="email" autoComplete="email" placeholder="请输入邮箱" required />
       </label>
 
       <label className="block space-y-2 text-sm text-slate-700">
         <span className="font-medium">密码</span>
-        <Input name="password" type="password" defaultValue="petcare123" required />
+        <Input name="password" type="password" autoComplete="current-password" placeholder="请输入密码" required />
       </label>
 
       {errorMessage ? <p className="text-sm text-rose-600">{errorMessage}</p> : null}
