@@ -83,6 +83,15 @@
 - `20-reports-statistics.md`
   讲为什么在业务闭环做完后再做报表、收入趋势和热门服务是怎么用纯 CSS 和 Prisma 聚合查询实现的
 
+- `21-auth-and-middleware.md`
+  讲两层路由保护（Proxy + Dashboard Layout）是怎么配合工作的，以及为什么 JWT 存在并不代表账号一定有效
+
+- `22-backend-security-and-performance.md`
+  讲如何用 safeParse 统一校验错误、处理 P2002 唯一约束冲突、用 updateMany 实现归属权校验、以及消除全表扫描
+
+- `23-ui-polish-and-ux.md`
+  讲 Toast 通知的服务端→客户端架构、关键词搜索的 DB 层实现、骨架屏/错误边界/404 页面的 Next.js 文件约定，以及侧边栏动态门店名的数据流
+
 ## 后续写作规则
 
 从现在开始，只要我帮你做了新的开发动作，原则上都会补一篇或更新一篇这里的文档。文档会尽量保持下面的结构：

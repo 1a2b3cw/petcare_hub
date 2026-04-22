@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { addDays, endOfDay, format, parse, startOfDay, subDays } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { AppointmentStatus } from "@prisma/client";
 
 import { advanceAppointmentStatusAction, cancelAppointmentAction } from "@/app/(dashboard)/appointments/actions";
+import { SearchInput } from "@/components/common/search-input";
 import { PageHeader } from "@/components/common/page-header";
 import { SearchParamToast } from "@/components/common/search-param-toast";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +16,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { prisma } from "@/lib/prisma";
 import { appointmentStatusOptions } from "@/types/domain";
 
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 type AppointmentsPageProps = {
-  searchParams: Promise<{ status?: string; view?: string; date?: string }>;
+  searchParams: Promise<{ status?: string; view?: string; date?: string; q?: string }>;
 };
 
 const statusConfig: Record<AppointmentStatus, { label: string; className: string }> = {
@@ -49,13 +51,14 @@ function safeParseDate(value?: string) {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
-function buildHref(input: { view: "list" | "calendar"; status: string; date?: string }) {
+function buildHref(input: { view: "list" | "calendar"; status: string; date?: string; q?: string }) {
   const p = new URLSearchParams();
   if (input.view !== "list") p.set("view", input.view);
   if (input.status !== "ALL") p.set("status", input.status);
   if (input.date) p.set("date", input.date);
-  const q = p.toString();
-  return q ? `/appointments?${q}` : "/appointments";
+  if (input.q) p.set("q", input.q);
+  const qs = p.toString();
+  return qs ? `/appointments?${qs}` : "/appointments";
 }
 
 export default async function AppointmentsPage({ searchParams }: AppointmentsPageProps) {
@@ -64,19 +67,28 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
   const view = params.view === "calendar" ? "calendar" : "list";
   const selectedDate = safeParseDate(params.date);
   const selectedDateKey = format(selectedDate, "yyyy-MM-dd");
+  const q = params.q?.trim() ?? "";
 
   const where = {
     ...(status === "ALL" ? {} : { status: status as AppointmentStatus }),
     ...(view === "calendar" || params.date
       ? { scheduledDate: { gte: startOfDay(selectedDate), lte: endOfDay(selectedDate) } }
       : {}),
+    ...(q && view === "list"
+      ? {
+          OR: [
+            { appointmentNo: { contains: q, mode: "insensitive" as const } },
+            { customer: { name: { contains: q, mode: "insensitive" as const } } },
+            { pet: { name: { contains: q, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
   };
 
   const appointments = await prisma.appointment.findMany({
     where,
     orderBy: view === "calendar" || params.date ? [{ startTime: "asc" }] : [{ scheduledDate: "desc" }, { startTime: "asc" }],
-    // 列表视图无日期筛选时最多取最近 100 条，避免全表加载
-    take: view === "list" && !params.date ? 100 : undefined,
+    take: view === "list" && !params.date && !q ? 100 : undefined,
     include: {
       customer: { select: { id: true, name: true } },
       pet: { select: { name: true } },
@@ -101,22 +113,29 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
         }
       />
 
-      {/* 视图切换 + 状态筛选 */}
+      {/* 视图切换 + 搜索框 + 日期导航 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
-          {(["list", "calendar"] as const).map((v) => (
-            <Button
-              key={v}
-              asChild
-              size="sm"
-              variant={view === v ? "default" : "ghost"}
-              className="h-7 px-3 text-xs"
-            >
-              <Link href={buildHref({ view: v, status, date: v === "calendar" ? selectedDateKey : params.date })}>
-                {v === "list" ? "列表" : "日历"}
-              </Link>
-            </Button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
+            {(["list", "calendar"] as const).map((v) => (
+              <Button
+                key={v}
+                asChild
+                size="sm"
+                variant={view === v ? "default" : "ghost"}
+                className="h-7 px-3 text-xs"
+              >
+                <Link href={buildHref({ view: v, status, date: v === "calendar" ? selectedDateKey : params.date })}>
+                  {v === "list" ? "列表" : "日历"}
+                </Link>
+              </Button>
+            ))}
+          </div>
+          {view === "list" && (
+            <Suspense fallback={null}>
+              <SearchInput placeholder="搜索预约号、客户、宠物…" className="w-56" />
+            </Suspense>
+          )}
         </div>
 
         {view === "calendar" && (
@@ -258,7 +277,11 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
                     <TableCell colSpan={7}>
                       <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
                         <CalendarDays className="h-8 w-8 opacity-30" />
-                        <p>当前筛选条件下没有预约</p>
+                        {q ? (
+                          <p>没有找到匹配「{q}」的预约</p>
+                        ) : (
+                          <p>当前筛选条件下没有预约</p>
+                        )}
                         <Button asChild size="sm" variant="outline">
                           <Link href="/appointments/new">新建预约</Link>
                         </Button>
