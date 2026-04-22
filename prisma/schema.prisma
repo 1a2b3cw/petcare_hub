@@ -223,7 +223,7 @@ model FollowUpTask {
   customer           Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
   petId              String?
   pet                Pet?           @relation(fields: [petId], references: [id], onDelete: SetNull)
-  sourceVisitRecordId String?
+  sourceVisitRecordId String?        @unique
   sourceVisitRecord  VisitRecord?   @relation(fields: [sourceVisitRecordId], references: [id], onDelete: SetNull)
   dueDate            DateTime
   status             FollowUpStatus @default(PENDING)
@@ -234,7 +234,6 @@ model FollowUpTask {
 
   @@index([customerId])
   @@index([petId])
-  @@index([sourceVisitRecordId])
   @@index([status])
   @@index([dueDate])
 }

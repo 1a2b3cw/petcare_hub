@@ -17,14 +17,20 @@ export default async function DashboardLayout({
   }
 
   // 校验账号是否仍然有效，防止已停用账号利用残存 JWT 进入后台
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { isActive: true },
-  });
+  const [user, storeProfile] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { isActive: true },
+    }),
+    prisma.storeProfile.findUnique({
+      where: { id: "default-store" },
+      select: { name: true },
+    }),
+  ]);
 
   if (!user?.isActive) {
     redirect("/login");
   }
 
-  return <AppShell>{children}</AppShell>;
+  return <AppShell storeName={storeProfile?.name}>{children}</AppShell>;
 }

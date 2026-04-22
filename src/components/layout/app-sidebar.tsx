@@ -37,9 +37,10 @@ const navGroups = [
 
 type AppSidebarProps = {
   onNavigate?: () => void;
+  storeName?: string;
 };
 
-export function AppSidebar({ onNavigate }: AppSidebarProps) {
+export function AppSidebar({ onNavigate, storeName }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -49,8 +50,8 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         <div className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-[hsl(174_84%_42%)]">
           <PawPrint className="h-4 w-4 text-white" />
         </div>
-        <div>
-          <p className="text-sm font-semibold text-white">PetCare Hub</p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-white">{storeName ?? "PetCare Hub"}</p>
           <p className="text-xs text-[hsl(213_27%_55%)]">门店后台</p>
         </div>
       </div>

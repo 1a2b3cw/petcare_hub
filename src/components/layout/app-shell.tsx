@@ -9,9 +9,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 
 type AppShellProps = {
   children: React.ReactNode;
+  storeName?: string;
 };
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, storeName }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -19,7 +20,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* 桌面端固定侧边栏 */}
       <aside className="hidden w-60 flex-none flex-col md:flex">
         <div className="sticky top-0 h-screen overflow-y-auto">
-          <AppSidebar onNavigate={() => {}} />
+          <AppSidebar onNavigate={() => {}} storeName={storeName} />
         </div>
       </aside>
 
@@ -29,7 +30,7 @@ export function AppShell({ children }: AppShellProps) {
           <SheetHeader className="sr-only">
             <SheetTitle>导航菜单</SheetTitle>
           </SheetHeader>
-          <AppSidebar onNavigate={() => setMobileOpen(false)} />
+          <AppSidebar onNavigate={() => setMobileOpen(false)} storeName={storeName} />
         </SheetContent>
       </Sheet>
 
@@ -46,7 +47,7 @@ export function AppShell({ children }: AppShellProps) {
             <Menu className="h-4 w-4" />
             <span className="sr-only">打开菜单</span>
           </Button>
-          <span className="text-sm font-semibold">PetCare Hub</span>
+          <span className="text-sm font-semibold">{storeName ?? "PetCare Hub"}</span>
         </header>
 
         <main className="flex-1 p-6 pb-12">
